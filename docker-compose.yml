@@ -1,23 +1,65 @@
-version: '3'
+version: '2.1'
 services:
+######## CASSANDRA ########
   cassandra:
-    hostname: cassandra-host
     image: cassandra:3
-    command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
+    hostname: cassandra
+    environment:
+      WAIT_TIMEOUT: "60"
+      JVM_OPTS: "-Dcassandra.consistent.rangemovement=false"
+      CASSANDRA_CLUSTER_NAME: "DemoCluster"
+      CASSANDRA_ENDPOINT_SNITCH: "GossipingPropertyFileSnitch"
+      CASSANDRA_DC: "DATA"
+    healthcheck:
+      test: ["CMD-SHELL", "/scripts/waitforcassandra.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    restart: always 
     expose:
-      - 7000
-      - 7001
-      - 7199
       - 9042
-      - 9160
-    volumes: # uncomment if you desire mounts, also uncomment cluster.sh
-    - ./data/cassandra-1:/var/lib/cassandra:rw
-  cassandra-client:
-    hostname: cassandra-client
-    links:
-      - "cassandra:db"
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./scripts:/scripts
+  cassandra-init:
     image: cassandra:3
-    command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && sleep infinity"
-    #command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
-    volumes: # uncomment if you desire mounts, also uncomment cluster.sh
-      - ./scripts:/home:rw
+    hostname: client
+    volumes:
+      - ./scripts:/scripts
+    command: /scripts/setupCassandra.sh
+    links:
+      - cassandra:db
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    restart: on-failure
+    stdin_open: true
+    tty: true
+
+
+# version: '3'
+# services:
+  # cassandra:
+  #   hostname: cassandra-host
+  #   image: cassandra:3
+  #   command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
+  #   expose:
+  #     - 7000
+  #     - 7001
+  #     - 7199
+  #     - 9042
+  #     - 9160
+  #   volumes: # uncomment if you desire mounts, also uncomment cluster.sh
+  #   - ./data/cassandra-1:/var/lib/cassandra:rw
+  # cassandra-client:
+  #   hostname: cassandra-client
+  #   links:
+  #     - "cassandra:db"
+  #   image: cassandra:3
+  #   command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && sleep infinity"
+  #   #command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
+  #   volumes: # uncomment if you desire mounts, also uncomment cluster.sh
+  #     - ./scripts:/home:rw
+
+  
