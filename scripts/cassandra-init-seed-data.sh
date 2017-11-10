@@ -64,5 +64,3 @@ echo "FINISHED ADDING TERMS TO THE WATCHLIST"
 #     insertiontime timestamp,
 #     PRIMARY KEY ((topic, lang_code), category)
 # );
-
-/bin/bash

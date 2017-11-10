@@ -1,4 +1,4 @@
-version: '2.1'
+version: '2.3'
 services:
 ######## CASSANDRA ########
   cassandra:
@@ -24,10 +24,23 @@ services:
       - ./scripts:/scripts
   cassandra-init:
     image: cassandra:3
+    hostname: init
+    volumes:
+      - ./scripts:/scripts
+    command: /scripts/cassandra-init-seed-data.sh && /bin/bash
+    links:
+      - cassandra:db
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    restart: "no"
+  cassandra-client:
+    # just run docker-compose run cassandra-client - that just connects.
+    image: cassandra:3
     hostname: client
     volumes:
       - ./scripts:/scripts
-    command: /scripts/cassandra-init-seed-data.sh
+    command: /bin/bash
     links:
       - cassandra:db
     depends_on:
@@ -36,30 +49,3 @@ services:
     restart: on-failure
     stdin_open: true
     tty: true
-
-
-# version: '3'
-# services:
-  # cassandra:
-  #   hostname: cassandra-host
-  #   image: cassandra:3
-  #   command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
-  #   expose:
-  #     - 7000
-  #     - 7001
-  #     - 7199
-  #     - 9042
-  #     - 9160
-  #   volumes: # uncomment if you desire mounts, also uncomment cluster.sh
-  #   - ./data/cassandra-1:/var/lib/cassandra:rw
-  # cassandra-client:
-  #   hostname: cassandra-client
-  #   links:
-  #     - "cassandra:db"
-  #   image: cassandra:3
-  #   command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && sleep infinity"
-  #   #command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
-  #   volumes: # uncomment if you desire mounts, also uncomment cluster.sh
-  #     - ./scripts:/home:rw
-
-  
