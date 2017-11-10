@@ -27,7 +27,7 @@ services:
     hostname: client
     volumes:
       - ./scripts:/scripts
-    command: /scripts/setupCassandra.sh
+    command: /scripts/cassandra-init-seed-data.sh
     links:
       - cassandra:db
     depends_on:
